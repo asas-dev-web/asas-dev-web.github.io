@@ -25,7 +25,7 @@
       box-sizing: border-box;
     }
 
-    body, html {
+    html, body {
       height: 100%;
       font-family: sans-serif;
       background-color: var(--bg-color);
@@ -33,9 +33,9 @@
     }
 
     .container {
+      height: 100%;
       display: flex;
       flex-direction: column;
-      height: 100%;
     }
 
     .toolbar {
@@ -70,9 +70,23 @@
       color: var(--text-color);
     }
 
-    .editor {
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column; /* será alterado dinamicamente */
+      transition: all 0.3s ease;
+    }
+
+    .horizontal .main {
+      flex-direction: row;
+    }
+
+    .editor, .preview {
       flex: 1;
       padding: 10px;
+    }
+
+    .editor {
       background-color: var(--bg-color);
     }
 
@@ -89,8 +103,12 @@
     }
 
     .preview {
-      flex: 1;
       border-top: 2px solid var(--border-color);
+    }
+
+    .horizontal .preview {
+      border-top: none;
+      border-left: 2px solid var(--border-color);
     }
 
     iframe {
@@ -111,6 +129,7 @@
       <button onclick="copyToClipboard()">📋 Copiar</button>
       <button onclick="downloadHTML()">💾 Baixar</button>
       <button onclick="toggleTheme()">🌗 Tema Claro/Escuro</button>
+      <button onclick="toggleLayout()">🧭 Layout Vertical/Horizontal</button>
     </div>
 
     <!-- Campos de links externos -->
@@ -119,14 +138,14 @@
       <input id="jsLink" type="text" placeholder="🔗 Link de JavaScript externo (opcional)">
     </div>
 
-    <!-- Área de edição -->
-    <div class="editor">
-      <textarea id="editor"></textarea>
-    </div>
-
-    <!-- Área de visualização -->
-    <div class="preview">
-      <iframe id="preview"></iframe>
+    <!-- Área principal com editor e preview -->
+    <div class="main" id="mainArea">
+      <div class="editor">
+        <textarea id="editor"></textarea>
+      </div>
+      <div class="preview">
+        <iframe id="preview"></iframe>
+      </div>
     </div>
   </div>
 
@@ -135,6 +154,7 @@
     const previewFrame = document.getElementById('preview');
     const cssLinkInput = document.getElementById('cssLink');
     const jsLinkInput = document.getElementById('jsLink');
+    const mainArea = document.getElementById('mainArea');
 
     const defaultContent = `
 <h3>Bem-vindo ao editor HTML em tempo real!</h3>
@@ -152,6 +172,14 @@
       editor.value = localStorage.getItem('htmlEditorContent') || defaultContent;
       cssLinkInput.value = localStorage.getItem('htmlEditorCSS') || '';
       jsLinkInput.value = localStorage.getItem('htmlEditorJS') || '';
+      const layout = localStorage.getItem('editorLayout');
+      if (layout === 'horizontal') {
+        document.body.classList.add('horizontal');
+      }
+      const theme = localStorage.getItem('editorTheme');
+      if (theme === 'dark') {
+        document.body.classList.add('dark');
+      }
       updatePreview();
     }
 
@@ -170,7 +198,6 @@
         doc.write(`<link rel="stylesheet" href="${cssURL}">`);
       }
 
-      // Modo escuro aplicado ao iframe
       if (isDark) {
         doc.write(`
           <style>
@@ -229,9 +256,18 @@
 
     function toggleTheme() {
       document.body.classList.toggle('dark');
-      updatePreview(); // Reaplica tema dentro do iframe
+      const isDark = document.body.classList.contains('dark');
+      localStorage.setItem('editorTheme', isDark ? 'dark' : 'light');
+      updatePreview();
     }
 
+    function toggleLayout() {
+      document.body.classList.toggle('horizontal');
+      const isHorizontal = document.body.classList.contains('horizontal');
+      localStorage.setItem('editorLayout', isHorizontal ? 'horizontal' : 'vertical');
+    }
+
+    // Eventos
     editor.addEventListener('input', updatePreview);
     cssLinkInput.addEventListener('input', updatePreview);
     jsLinkInput.addEventListener('input', updatePreview);
