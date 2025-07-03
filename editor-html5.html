@@ -159,24 +159,37 @@
       const htmlContent = editor.value;
       const cssURL = cssLinkInput.value.trim();
       const jsURL = jsLinkInput.value.trim();
+      const isDark = document.body.classList.contains('dark');
 
       const doc = previewFrame.contentDocument || previewFrame.contentWindow.document;
       doc.open();
 
-      // Cabeçalho com CSS externo (se fornecido)
       doc.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">`);
+
       if (cssURL) {
         doc.write(`<link rel="stylesheet" href="${cssURL}">`);
       }
+
+      // Modo escuro aplicado ao iframe
+      if (isDark) {
+        doc.write(`
+          <style>
+            body {
+              background-color: #121212;
+              color: #eee;
+            }
+            a { color: #80cbc4; }
+          </style>
+        `);
+      }
+
       doc.write(`</head><body>`);
       doc.write(htmlContent);
 
-      // Adiciona créditos se conteúdo for padrão
       if (htmlContent.replace(/\s/g, '') === defaultContent.replace(/\s/g, '')) {
         doc.write(credits);
       }
 
-      // JS externo (se fornecido)
       if (jsURL) {
         doc.write(`<script src="${jsURL}"><\/script>`);
       }
@@ -184,7 +197,6 @@
       doc.write(`</body></html>`);
       doc.close();
 
-      // Salvar no localStorage
       localStorage.setItem('htmlEditorContent', htmlContent);
       localStorage.setItem('htmlEditorCSS', cssURL);
       localStorage.setItem('htmlEditorJS', jsURL);
@@ -217,6 +229,7 @@
 
     function toggleTheme() {
       document.body.classList.toggle('dark');
+      updatePreview(); // Reaplica tema dentro do iframe
     }
 
     editor.addEventListener('input', updatePreview);
