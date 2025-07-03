@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Editor HTML em Tempo Real</title>
+  <title>Editor HTML5 em Tempo Real</title>
   <link rel="icon" href="/logo.png">
   <style>
     :root {
@@ -127,6 +127,7 @@
     <div class="toolbar">
       <button onclick="clearEditor()">🧹 Limpar</button>
       <button onclick="copyToClipboard()">📋 Copiar</button>
+      <button onclick="pasteFromClipboard()">📥 Colar</button>
       <button onclick="downloadHTML()">💾 Baixar</button>
       <button onclick="toggleTheme()">🌗 Tema Claro/Escuro</button>
       <button onclick="toggleLayout()">🧭 Layout Vertical/Horizontal</button>
@@ -243,6 +244,16 @@
         alert('Conteúdo copiado para a área de transferência!');
       });
     }
+    
+    function pasteFromClipboard() {
+  navigator.clipboard.readText().then((text) => {
+    editor.value = text;
+    updatePreview();
+  }).catch(() => {
+    alert("❌ Não foi possível colar. Verifique se o navegador permite acesso à área de transferência.");
+  });
+}
+
 
     function downloadHTML() {
       const blob = new Blob([editor.value], { type: 'text/html' });
