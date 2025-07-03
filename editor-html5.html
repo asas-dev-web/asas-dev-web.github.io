@@ -40,6 +40,7 @@
 
     .toolbar {
       display: flex;
+      flex-wrap: wrap;
       gap: 10px;
       padding: 10px;
       background: var(--bg-color);
@@ -51,6 +52,21 @@
       cursor: pointer;
       background: var(--editor-bg);
       border: 1px solid var(--border-color);
+      color: var(--text-color);
+    }
+
+    .inputs {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 10px;
+      background-color: var(--bg-color);
+    }
+
+    .inputs input {
+      padding: 6px;
+      border: 1px solid var(--border-color);
+      background: var(--editor-bg);
       color: var(--text-color);
     }
 
@@ -97,6 +113,12 @@
       <button onclick="toggleTheme()">🌗 Tema Claro/Escuro</button>
     </div>
 
+    <!-- Campos de links externos -->
+    <div class="inputs">
+      <input id="cssLink" type="text" placeholder="🔗 Link de CSS externo (opcional)">
+      <input id="jsLink" type="text" placeholder="🔗 Link de JavaScript externo (opcional)">
+    </div>
+
     <!-- Área de edição -->
     <div class="editor">
       <textarea id="editor"></textarea>
@@ -111,6 +133,8 @@
   <script>
     const editor = document.getElementById('editor');
     const previewFrame = document.getElementById('preview');
+    const cssLinkInput = document.getElementById('cssLink');
+    const jsLinkInput = document.getElementById('jsLink');
 
     const defaultContent = `
 <h3>Bem-vindo ao editor HTML em tempo real!</h3>
@@ -124,46 +148,63 @@
 </div>
 `;
 
-    // Carrega o conteúdo salvo ou o padrão
     function loadEditorContent() {
-      const saved = localStorage.getItem('htmlEditorContent');
-      editor.value = saved || defaultContent;
+      editor.value = localStorage.getItem('htmlEditorContent') || defaultContent;
+      cssLinkInput.value = localStorage.getItem('htmlEditorCSS') || '';
+      jsLinkInput.value = localStorage.getItem('htmlEditorJS') || '';
       updatePreview();
     }
 
-    // Atualiza o iframe de visualização
     function updatePreview() {
-      const content = editor.value;
+      const htmlContent = editor.value;
+      const cssURL = cssLinkInput.value.trim();
+      const jsURL = jsLinkInput.value.trim();
+
       const doc = previewFrame.contentDocument || previewFrame.contentWindow.document;
       doc.open();
-      doc.write(content);
 
-      if (content.replace(/\s/g, '') === defaultContent.replace(/\s/g, '')) {
+      // Cabeçalho com CSS externo (se fornecido)
+      doc.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">`);
+      if (cssURL) {
+        doc.write(`<link rel="stylesheet" href="${cssURL}">`);
+      }
+      doc.write(`</head><body>`);
+      doc.write(htmlContent);
+
+      // Adiciona créditos se conteúdo for padrão
+      if (htmlContent.replace(/\s/g, '') === defaultContent.replace(/\s/g, '')) {
         doc.write(credits);
       }
 
+      // JS externo (se fornecido)
+      if (jsURL) {
+        doc.write(`<script src="${jsURL}"><\/script>`);
+      }
+
+      doc.write(`</body></html>`);
       doc.close();
 
-      // Salva automaticamente no localStorage
-      localStorage.setItem('htmlEditorContent', content);
+      // Salvar no localStorage
+      localStorage.setItem('htmlEditorContent', htmlContent);
+      localStorage.setItem('htmlEditorCSS', cssURL);
+      localStorage.setItem('htmlEditorJS', jsURL);
     }
 
-    // Botão: limpar editor
     function clearEditor() {
-      if (confirm("Deseja realmente limpar o conteúdo?")) {
+      if (confirm("Deseja realmente limpar o conteúdo e links?")) {
         editor.value = '';
+        cssLinkInput.value = '';
+        jsLinkInput.value = '';
         updatePreview();
       }
     }
 
-    // Botão: copiar conteúdo
     function copyToClipboard() {
       navigator.clipboard.writeText(editor.value).then(() => {
         alert('Conteúdo copiado para a área de transferência!');
       });
     }
 
-    // Botão: baixar HTML
     function downloadHTML() {
       const blob = new Blob([editor.value], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
@@ -174,13 +215,13 @@
       URL.revokeObjectURL(url);
     }
 
-    // Botão: alternar tema
     function toggleTheme() {
       document.body.classList.toggle('dark');
     }
 
-    // Eventos
     editor.addEventListener('input', updatePreview);
+    cssLinkInput.addEventListener('input', updatePreview);
+    jsLinkInput.addEventListener('input', updatePreview);
     window.addEventListener('DOMContentLoaded', loadEditorContent);
   </script>
 
